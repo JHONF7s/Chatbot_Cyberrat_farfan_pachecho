@@ -1,0 +1,54 @@
+services:
+  api:
+    build: 
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: rata_mania_api
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8011
+    ports:
+      - "8011:8011"
+    environment:
+      - CHATBOT_API_URL=http://api:8011
+    volumes:
+      - reservas-data:/data
+      - ../:/app
+
+  gradio:
+    build: 
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: rata_mania_gradio
+    restart: unless-stopped
+    command: python gradio_e.py
+    ports:
+      - "7860:7860"
+    env_file:
+      - ../.env
+    environment:
+      - CHATBOT_API_URL=http://api:8011
+    depends_on:
+      - api
+    volumes:
+      - reservas-data:/data
+      - ../:/app
+  
+  telegram:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: rata_mania_telegram
+    restart: unless-stopped
+    command: python telegram.py
+    env_file:
+      - ../.env 
+    environment:
+      CHATBOT_API_URL: http://api:8011
+    depends_on: 
+      - api
+    volumes:
+      - reservas-data:/data
+      - ../:/app
+
+volumes:
+  reservas-data:
